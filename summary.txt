@@ -1,0 +1,171 @@
+New Spring Legacy Project
+Project Name : Openplatform_board
+Template : Spring MVC Project
+Package : com.openplatform.board
+
+pom.xml, Project Facets, web.xml 설정해 주세요~
+
+- logback 설정
+  logback.xml 복사/붙여넣기(src/main/resources 밑)
+  패키지 변경
+  
+DB 관련 설정 (root-context.xml)
+1. dataSource bean
+2. mybatis용 sqlSessionFactory bean
+3. 트랜잭션(tx) 설정 처리
+4. mybatis-spring:scan 설정(dao 패키지 작업 후 작성)
+
+사이트 구조
+1. 회원 관련 기능
+	1) 로그인/로그아웃
+		- 세션 인터셉터
+	2) 회원 가입(아이디 중복 여부 확인 ajax)
+		- 비밀번호 암호화
+2. 게시판 관련 기능
+	1) 목록 보기
+		- 페이징 처리
+	2) 글쓰기
+		- 파일 업로드(멀티파트 전송 처리)
+	3) 글내용 보기
+		- 글 수정/삭제
+		- 댓글 처리(ajax)
+		- 파일 다운로드
+
+
+JSP 및 CSS, JS, Image 
+  JSP
+  	home.jsp
+  	header.jsp
+  	footer.jsp
+  	joinFrm.jsp
+  	loginFrm.jsp
+  	boardList.jsp
+  	writeFrm.jsp
+  	boardContent.jsp
+  	updateFrm.jsp - 과제
+  
+기타 자원 처리
+	src/main/webapp/resources 폴더에 css, js, images
+	폴더를 생성.  	
+
+
+비밀번호 암호화
+	Spring Security(보안 모듈 라이브러리)
+	
+	암호화 메소드
+		BCryptPasswordEncoder의 encode() 메소드로 암호화
+	
+	복호화는 제공하지 않음. 대신에 평문 비밀번호와 암호문을 비교하여
+	맞는지 틀린지를 알려주는 matches() 메소드를 제공.
+	equals로 비교 불가.
+
+암호화(Encryption)
+	평문(plane text) --> 암호문(cipher text)
+복호화(Decryption)
+	암호문(cipher text) --> 평문(plane text)
+
+Maven Repository에서 Security로 검색
+	Spring Security Core 선택.
+
+
+페이징 처리
+  전체 출력할 내용이 한 화면에 모두 보여주기 어려운 상황을 해결하기 위한 방법.
+  한 화면에 보일 데이터의 개수를 제한하고 여러 화면에 나눠서 보이도록 함.
+  
+  전체 데이터를 한 화면에 보일 데이터의 수로 분할하여 각 화면 당 번호를 붙이고,
+  각 번호에 링크를 연결하는 방식.
+  -> <a> 태그를 사용하여 링크로 연결.
+  
+  페이징 객체는 분할한 데이터에 링크를 연결하는 html 코드를 생성하는 객체.
+  
+
+파일 업로드 - Multi-part
+  멀티파트란 한 웹 문서 안에 문자와 바이너리 데이터(이미지, 동영상,
+  오디오 및 다양한 형식의 파일)이 같이 포함되어 있는 형태.
+
+  멀티파트 파일 업로드용 라이브러리 포함
+  commons-io, commons-fileupload를 pom.xml에 포함.
+  
+  MultipartResolver 객체(bean)를 servlet-context.xml에 설정.
+  	멀티파트로 전송되는 데이터를 해석하여 처리하는데 필요한 설정.
+  	설정 내용 - 문자셋(파일이름 처리), 업로드 크기, 업메모리 크기.
+	Resolver란 - 해석기. 요청 내용을 해석하여 그에 대응할 수 있는
+				조치를 취할 수 있도록 보조.
+			예) 문자열을 해석하여 경로와 파일명(jsp)으로 변환하는
+				역할을 하는 ViewResolver. 
+
+  업로드 파일 처리 방식
+  1. DB에 파일을 같이 저장(네이버 스마트에디터 등.. 에디터 api)
+  	 DB에 무리를 줌.
+  2. DB에 파일 정보만 저장하고 파일은 따로 파일서버에 저장.(이 방식으로 처리)
+
+selectKey : 키를 구하는 mybatis 구문
+	두 테이블이 같은 값을 공유하고, 거의 동시에 데이터를 저장할 때 사용.
+	(한 테이블은 기본키, 다른 테이블은 외래키)
+	공유하는 값(키)을 먼저 생성하고 그 값을 특정 변수(DTO의 필드)에 저장한
+	다음 사용하는 형태.
+	게시판 글번호를 해당 게시글과 함께 저장하는 파일에 같이 사용.
+	
+	주요 속성
+	1) useGeneratedKeys="true" : 부모태그에 작성하는 속성.
+			selectKey를 사용하겠다는 것을 명시.
+	2) keyProperty="필드" : dto의 필드를 지정.
+			selectKey의 쿼리문을 실행한 결과를 저장하는 변수를 지정.
+			부모 태그와 자식태그(selectKey 태그)가 공유하는 변수.
+			두 태그에 모두 작성.
+	3) resultType="필드타입" : selectKey에서 생성한 값의 타입.
+	4) order="BEFORE" : 자식태그의 실행 순서.
+			BEFORE : 자식태그가 먼저 실행.
+			AFTER : 자식태그가 나중에 실행.
+
+
+HTML 코드에서 입력한 파일 업로드에 대한 처리
+1) 한 HTML 문서에는 여러개의 <input type="file" name="fn">이 들어간다.
+2) 한 <input type="file" mulitple> 태그에는 여러개의 파일이 들어간다.
+	예)	<input type="file" name="fn1" multiple> : 3개 파일
+		<input type="file" name="fn2" multiple> : 2개 파일
+		<input type="file" name="fn3" multiple> : 5개 파일
+	Iterator<String> it1 = multi.getFileNames();
+	it1에 저장된 값들 : fn1, fn2, fn3
+	
+	List<MultipartFile> fList = multi.getFiles("fn1");
+	fList : 3개 파일
+	List<MultipartFile> fList = multi.getFiles("fn2");
+	fList : 2개 파일
+	List<MultipartFile> fList = multi.getFiles("fn3");
+	fList : 5개 파일
+
+
+
+
+세션 인터셉터(필터링)
+  비인증(로그인 없는) 접근 제어.
+  사용자의 요청이 컨트롤러로 전달되기 전에 가로채서 내용을 확인하고
+  정상적인 상태일 경우 컨트롤러로 전달, 비정상적인 상태일 경우
+  다시 되돌리는 작업을 하는 객체.
+  
+  작업 단계
+  1) 인터셉터 클래스 작성(HandlerInterceptorAdapter)
+  2) servlet-context.xml에 관련 설정 작성
+
+  로그인이 되지 않았을 경우 첫 페이지로 강제 이동.
+  로그아웃 후 뒤로가기로 페이지이동 막기
+
+수정/삭제 관련 사항
+  조회수 수정 추가
+  게시글 수정 추가
+  게시글 삭제 추가
+  
+  수정 화면에서 파일명 클릭하여 개별 삭제(ajax)
+  수정 시 파일 추가는 기존 게시글 작성과 동일
+  
+  게시글 삭제 시 실제 파일은 삭제하지 않음.
+  파일 개별 삭제 시(수정 화면)에는 실제 파일도 삭제함.
+  이부분을 활용하면 게시글 삭제 시 실제 파일도 찾아서
+  삭제하도록 작성할 수 있음.
+  수정화면에서 개별 파일 삭제는 복구 안됨!
+
+
+
+
+
